@@ -6,7 +6,10 @@ import { createRunRegistry } from "../src/runtime/run-registry.js";
 const createRequest = (runId: string): RunRequest => ({
   run_id: runId,
   session_id: "session",
-  messages: [{ role: "user", content: "hello" }],
+  system_prompt: "You are helpful.",
+  messages: [{ role: "user", content: "hello", timestamp: 1 }],
+  provider: "openrouter",
+  model: "z-ai/glm-4.5-air:free",
   workspace_cwd: "/tmp",
   run_timeout_ms: 1000,
   tool_timeout_ms: 1000,

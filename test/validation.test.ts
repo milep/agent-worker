@@ -16,9 +16,10 @@ describe("validateRunRequest", () => {
       {
         run_id: "run-1",
         session_id: "session-1",
+        system_prompt: "You are helpful.",
         provider: "openrouter",
         model: "z-ai/glm-4.5-air:free",
-        messages: [{ role: "user", content: "hi" }]
+        messages: [{ role: "user", content: "hi", timestamp: 1 }]
       },
       defaults
     );
@@ -35,9 +36,10 @@ describe("validateRunRequest", () => {
       {
         run_id: "run-2",
         session_id: "session-2",
+        system_prompt: "You are helpful.",
         provider: "openrouter",
         model: "z-ai/glm-4.5-air:free",
-        messages: [{ role: "user", content: "hi" }],
+        messages: [{ role: "user", content: "hi", timestamp: 1 }],
         workspace_cwd: "/etc"
       },
       defaults

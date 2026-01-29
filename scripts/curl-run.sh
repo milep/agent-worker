@@ -4,10 +4,10 @@ curl -sS -X POST http://localhost:3000/runs \
   -d '{
     "run_id": "run-123",
     "session_id": "session-123",
+    "system_prompt": "You are helpful.",
     "provider": "openrouter",
     "model": "z-ai/glm-4.5-air:free",
     "messages": [
-      { "role": "system", "content": "You are helpful." },
-      { "role": "user", "content": "respond with ok" }
+      { "role": "user", "content": "respond with ok", "timestamp": 1 }
     ]
   }'

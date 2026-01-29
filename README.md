@@ -14,6 +14,11 @@ docker compose up
 ./scripts/curl-run.sh
 ```
 
+`POST /runs` expects:
+- `system_prompt` as a string (Rails-provided)
+- `messages` as Pi-native messages (`user`, `assistant`, `toolResult`) with timestamps
+- `provider` + `model` required, and `messages` must end with a `user` prompt
+
 ## Endpoints
 
 - `POST /runs`

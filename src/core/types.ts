@@ -1,15 +1,40 @@
-export type Message = {
-  role: string;
+export type UserMessage = {
+  role: "user";
   content?: unknown;
-  [key: string]: unknown;
+  timestamp: number;
 };
+
+export type AssistantMessageRecord = {
+  role: "assistant";
+  content?: unknown;
+  api: string;
+  provider: string;
+  model: string;
+  usage?: unknown;
+  stopReason: string;
+  errorMessage?: string;
+  timestamp: number;
+};
+
+export type ToolResultMessage = {
+  role: "toolResult";
+  toolCallId: string;
+  toolName: string;
+  content?: unknown;
+  details?: unknown;
+  isError: boolean;
+  timestamp: number;
+};
+
+export type Message = UserMessage | AssistantMessageRecord | ToolResultMessage;
 
 export type RunRequest = {
   run_id: string;
   session_id: string;
+  system_prompt: string;
   messages: Message[];
-  provider?: string;
-  model?: string;
+  provider: string;
+  model: string;
   temperature?: number;
   max_tokens?: number;
   workspace_cwd: string;

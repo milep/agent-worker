@@ -19,6 +19,7 @@ export type PiTurnResponse = {
 export type PiClient = {
   runTurn: (input: {
     run_id: string;
+    system_prompt: string;
     messages: Message[];
     provider?: string;
     model?: string;
@@ -78,6 +79,7 @@ export const runOnce = async (
 
   const piResponse = await deps.piClient.runTurn({
     run_id: request.run_id,
+    system_prompt: request.system_prompt,
     messages,
     ...(request.provider ? { provider: request.provider } : {}),
     ...(request.model ? { model: request.model } : {}),

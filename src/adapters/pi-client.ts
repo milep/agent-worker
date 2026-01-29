@@ -15,34 +15,13 @@ import {
   type ToolDefinition
 } from "@mariozechner/pi-coding-agent";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type {
-  AssistantMessage as PiAssistantMessage,
-  Message as PiMessage,
-  TextContent,
-  ToolResultMessage,
-  Usage
-} from "@mariozechner/pi-ai";
+import type { AssistantMessage as PiAssistantMessage } from "@mariozechner/pi-ai";
 import type { PiClient } from "../core/runner.js";
-import type { AssistantMessage, Message, ToolCall, ToolOutput, ToolResult } from "../core/types.js";
+import type { AssistantMessage, ToolCall, ToolOutput, ToolResult } from "../core/types.js";
 import { runBashTool } from "../runtime/bash-tool.js";
 
 type PiClientOptions = {
   workspaceRoot: string;
-};
-
-const EMPTY_USAGE: Usage = {
-  input: 0,
-  output: 0,
-  cacheRead: 0,
-  cacheWrite: 0,
-  totalTokens: 0,
-  cost: {
-    input: 0,
-    output: 0,
-    cacheRead: 0,
-    cacheWrite: 0,
-    total: 0
-  }
 };
 
 const toolSchema = Type.Object({
@@ -51,102 +30,27 @@ const toolSchema = Type.Object({
   timeout_ms: Type.Optional(Type.Number({ description: "Timeout in milliseconds (optional)" }))
 });
 
-const normalizeTextBlocks = (content: unknown): TextContent[] => {
+const extractText = (content: unknown): string => {
   if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+    return content;
   }
   if (Array.isArray(content)) {
-    const blocks: TextContent[] = [];
-    for (const part of content) {
-      if (typeof part === "string") {
-        blocks.push({ type: "text", text: part });
-        continue;
-      }
-      if (part && typeof part === "object" && "type" in part && part.type === "text" && "text" in part) {
-        blocks.push(part as TextContent);
-        continue;
-      }
-      blocks.push({ type: "text", text: JSON.stringify(part) });
-    }
-    return blocks.length > 0 ? blocks : [{ type: "text", text: "" }];
+    return content
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+        if (part && typeof part === "object" && "type" in part && part.type === "text" && "text" in part) {
+          return String((part as { text: unknown }).text);
+        }
+        return JSON.stringify(part);
+      })
+      .join("");
   }
-  return [{ type: "text", text: JSON.stringify(content) }];
-};
-
-const extractText = (content: unknown): string => {
-  const blocks = normalizeTextBlocks(content);
-  return blocks.map((block) => block.text).join("");
-};
-
-const buildSystemPrompt = (messages: Message[]): string | undefined => {
-  const systemTexts = messages
-    .filter((message) => message.role === "system")
-    .map((message) => extractText(message.content));
-  if (systemTexts.length === 0) {
-    return undefined;
+  if (content === undefined) {
+    return "";
   }
-  return systemTexts.join("\n\n");
-};
-
-const buildHistoryMessages = (messages: Message[], modelInfo: { api: string; provider: string; id: string }) => {
-  const lastUserIndex = [...messages]
-    .map((message, index) => ({ message, index }))
-    .reverse()
-    .find((entry) => entry.message.role === "user")?.index;
-
-  if (lastUserIndex === undefined) {
-    throw new Error("no user message provided");
-  }
-
-  const promptMessage = messages[lastUserIndex];
-  if (!promptMessage) {
-    throw new Error("no user message provided");
-  }
-  const promptText = extractText(promptMessage.content);
-
-  const history = messages.slice(0, lastUserIndex);
-  const historyMessages: AgentMessage[] = [];
-
-  for (const message of history) {
-    if (message.role === "system") {
-      continue;
-    }
-    if (message.role === "user") {
-      historyMessages.push({
-        role: "user",
-        content: normalizeTextBlocks(message.content),
-        timestamp: Date.now()
-      });
-      continue;
-    }
-    if (message.role === "assistant") {
-      const assistantMessage: PiAssistantMessage = {
-        role: "assistant",
-        content: normalizeTextBlocks(message.content),
-        api: modelInfo.api,
-        provider: modelInfo.provider,
-        model: modelInfo.id,
-        usage: EMPTY_USAGE,
-        stopReason: "stop",
-        timestamp: Date.now()
-      };
-      historyMessages.push(assistantMessage);
-      continue;
-    }
-    if (message.role === "tool_result") {
-      const toolResult: ToolResultMessage = {
-        role: "toolResult",
-        toolCallId: `tool-result-${historyMessages.length + 1}`,
-        toolName: "tool",
-        content: normalizeTextBlocks(message.content),
-        isError: false,
-        timestamp: Date.now()
-      };
-      historyMessages.push(toolResult);
-    }
-  }
-
-  return { historyMessages, promptText };
+  return JSON.stringify(content);
 };
 
 const buildToolOutput = (result: unknown, isError: boolean, durationMs: number): ToolOutput => {
@@ -163,26 +67,10 @@ const buildToolOutput = (result: unknown, isError: boolean, durationMs: number):
     ) {
       return details as ToolOutput;
     }
-
-    const fullOutputPath =
-      details && typeof details === "object" && "fullOutputPath" in details
-        ? String((details as { fullOutputPath?: string }).fullOutputPath)
-        : undefined;
-    const truncated =
-      details && typeof details === "object" && ("truncation" in details || "fullOutputPath" in details);
-
-    return {
-      stdout: extractText((result as { content?: unknown }).content ?? ""),
-      stderr: "",
-      exit_code: isError ? 1 : 0,
-      duration_ms: durationMs,
-      truncated: Boolean(truncated),
-      ...(fullOutputPath ? { full_output_path: fullOutputPath } : {})
-    };
   }
 
   return {
-    stdout: "",
+    stdout: extractText((result as { content?: unknown } | undefined)?.content ?? ""),
     stderr: "",
     exit_code: isError ? 1 : 0,
     duration_ms: durationMs,
@@ -223,21 +111,10 @@ const createBashTool = (params: {
 });
 
 export const createPiClient = (options: PiClientOptions): PiClient => {
-  const mode = process.env.PI_CLIENT ?? "sdk";
-  if (mode === "mock") {
-    return {
-      runTurn: ({ messages }) => Promise.resolve({
-        assistant_message: { content: messages.at(-1)?.content ?? "", finish_reason: "stop" }
-      })
-    };
-  }
-  if (mode !== "sdk") {
-    throw new Error(`unsupported PI_CLIENT mode: ${mode}`);
-  }
-
   return {
     runTurn: async ({
       run_id,
+      system_prompt,
       messages,
       provider,
       model,
@@ -265,21 +142,22 @@ export const createPiClient = (options: PiClientOptions): PiClient => {
         throw new Error(`Model not found: ${provider}/${model}`);
       }
 
-      const systemPrompt = buildSystemPrompt(messages);
       const loader = new DefaultResourceLoader({
         cwd,
-        systemPromptOverride: () => systemPrompt ?? "",
         agentsFilesOverride: () => ({ agentsFiles: [] }),
         skillsOverride: (current) => ({ skills: [], diagnostics: current.diagnostics }),
         promptsOverride: (current) => ({ prompts: [], diagnostics: current.diagnostics })
       });
       await loader.reload();
 
-      const { historyMessages, promptText } = buildHistoryMessages(messages, {
-        api: selectedModel.api,
-        provider: selectedModel.provider,
-        id: selectedModel.id
-      });
+      if (messages.length === 0) {
+        throw new Error("messages must include a user prompt");
+      }
+      const promptMessage = messages[messages.length - 1];
+      if (!promptMessage || promptMessage.role !== "user") {
+        throw new Error("messages must end with a user prompt");
+      }
+      const historyMessages = messages.slice(0, -1) as AgentMessage[];
 
       const tools = [
         createReadTool(cwd),
@@ -312,13 +190,14 @@ export const createPiClient = (options: PiClientOptions): PiClient => {
         settingsManager: SettingsManager.inMemory({ compaction: { enabled: false } })
       });
 
-      session.agent.replaceMessages(historyMessages as PiMessage[]);
+      session.agent.setSystemPrompt(system_prompt);
+      session.agent.replaceMessages(historyMessages);
 
       const toolCalls: ToolCall[] = [];
       const toolResults: ToolResult[] = [];
       const toolStartTimes = new Map<string, number>();
       let assistant: PiAssistantMessage | undefined;
-      let usage: Usage | undefined;
+      let usage: unknown;
 
       const unsubscribe = session.subscribe((event) => {
         if (event.type === "tool_execution_start") {
@@ -352,7 +231,7 @@ export const createPiClient = (options: PiClientOptions): PiClient => {
       }
 
       try {
-        await session.prompt(promptText, { expandPromptTemplates: false });
+        await session.agent.prompt(promptMessage as AgentMessage);
         await session.agent.waitForIdle();
       } finally {
         signal.removeEventListener("abort", abortListener);
