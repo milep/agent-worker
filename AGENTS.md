@@ -69,19 +69,19 @@
   - A clearly described manual validation step.
 
 ## Environment & Configuration
-- Dev environment variables live in:
-  - `.env` (dummy defaults, committed)
+- Environment variables are secrets-only (example: `OPENROUTER_API_KEY`).
+- Non-secret config is static in code; do not add env toggles for runtime behavior.
+- Dev env files:
+  - `.env` (local secrets, gitignored)
   - `.env.example` (documentation)
   - `.env.local` (machine-specific secrets, gitignored)
 - Do not read `.env` files in automation or agent workflows.
-- Only use environment variables when values are expected to differ across environments (dev vs prod). Otherwise prefer static code defaults.
-- `.env` is secrets-only (example: `OPENROUTER_API_KEY`); non-secret config must live in code config files.
 - Do not hardcode IDs or tokens.
 
 ## Deployment
 - Single-container deployment model.
 - Build produces a deterministic production image.
-- Runtime configuration is entirely via environment variables.
+- Runtime secrets are injected via environment variables.
 - No CI-side deployment automation unless explicitly added later.
 - Deployment target assumptions (unless stated otherwise):
   - Ubuntu LTS VPS

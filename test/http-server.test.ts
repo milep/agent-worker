@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createServer } from "../src/http/server.js";
 import { createRunRegistry } from "../src/runtime/run-registry.js";
 import { resolveWorkspaceCwd } from "../src/runtime/workspace.js";
-import type { PiClient } from "../src/core/runner.js";
+import type { PiClient } from "../src/runtime/runner.js";
 import type { ToolCall, ToolResult } from "../src/core/types.js";
 
 const buildPiClient = (options?: {

@@ -6,7 +6,7 @@ import type {
   RunResult,
   ToolCall,
   ToolResult
-} from "./types.js";
+} from "../core/types.js";
 
 export type PiTurnResponse = {
   assistant_message: AssistantMessage;

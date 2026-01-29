@@ -1,6 +1,6 @@
 import type { RunEvent, RunRequest, RunResult } from "../core/types.js";
-import type { RunDependencies } from "../core/runner.js";
-import { runOnce } from "../core/runner.js";
+import type { RunDependencies } from "./runner.js";
+import { runOnce } from "./runner.js";
 
 type RunRecord = {
   request: RunRequest;

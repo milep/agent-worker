@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PiClient } from "../src/core/runner.js";
+import type { PiClient } from "../src/runtime/runner.js";
 import type { RunRequest } from "../src/core/types.js";
 import { createRunRegistry } from "../src/runtime/run-registry.js";
 

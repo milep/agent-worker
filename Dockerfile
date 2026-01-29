@@ -13,6 +13,5 @@ RUN npm run build
 USER agent
 
 ENV NODE_ENV=production
-ENV PORT=3000
 
 CMD ["npm", "run", "start"]

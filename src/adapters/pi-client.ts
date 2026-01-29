@@ -16,7 +16,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import type { AssistantMessage as PiAssistantMessage } from "@mariozechner/pi-ai";
-import type { PiClient } from "../core/runner.js";
+import type { PiClient } from "../runtime/runner.js";
 import type { AssistantMessage, ToolCall, ToolOutput, ToolResult } from "../core/types.js";
 import { runBashTool } from "../runtime/bash-tool.js";
 
