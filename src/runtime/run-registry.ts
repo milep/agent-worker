@@ -94,19 +94,20 @@ export const createRunRegistry = (deps: Omit<RunDependencies, "emit">): RunRegis
     } catch (error) {
       clearTimeout(timeout);
       const message = error instanceof Error ? error.message : "unknown error";
+      const aborted = controller.signal.aborted;
       const result: RunResult = {
         run_id: request.run_id,
         session_id: request.session_id,
         events: record.events,
         tool_calls: [],
         tool_results: [],
-        status: "error",
-        error: message,
+        status: aborted ? "aborted" : "error",
+        error: aborted ? "run aborted" : message,
         truncated: false
       };
       record.result = result;
-      record.status = "failed";
-      record.error = message;
+      record.status = aborted ? "aborted" : "failed";
+      record.error = aborted ? "run aborted" : message;
       record.finishedAt = Date.now();
       currentRunId = undefined;
       return { type: "completed", result };
