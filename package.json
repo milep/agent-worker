@@ -1,0 +1,32 @@
+{
+  "name": "agent-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "prestart": "npm run build",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit"
+  },
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "^0.50.3",
+    "@sinclair/typebox": "^0.33.20",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
+    "eslint": "^9.18.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=24.13.0"
+  }
+}
