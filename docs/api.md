@@ -1,27 +1,6 @@
-# Agent Worker
+# Agent Worker API
 
-Privileged agent runtime service for single-run jobs dispatched by Sleeve.
-
-## Quick start (local)
-
-```sh
-docker compose run --rm worker npm install
-docker compose up
-```
-
-```sh
-./scripts/curl-status.sh
-./scripts/curl-run.sh
-```
-
-`POST /runs` expects:
-- `system_prompt` as a string (Rails-provided)
-- `messages` as Pi-native messages (`user`, `assistant`, `toolResult`) with timestamps
-- `provider` + `model` required, and `messages` must end with a `user` prompt
-
-## API
-
-### POST /runs
+## POST /runs
 
 Run a single agent turn. Rails must send a Pi-native payload.
 
@@ -81,22 +60,22 @@ Response:
 - `events[]` (run/tool lifecycle)
 - `status`: `ok` | `error` | `aborted`
 
-### GET /runs/:id
+## GET /runs/:id
 
 Returns the cached run result and recorded events.
 
-### POST /runs/:id/abort
+## POST /runs/:id/abort
 
 Aborts a running run. Returns `202` when the abort signal is accepted.
 
-### POST /runs/:id/interrupt
+## POST /runs/:id/interrupt
 
 Not implemented (returns `501`).
 
-### GET /runs/:id/events
+## GET /runs/:id/events
 
 SSE stream of run events (past events are replayed on connect).
 
-### GET /status
+## GET /status
 
 Returns readiness + busy state.
